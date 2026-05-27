@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5.20 特别问题</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    overflow-x: hidden;
+  }
+
+  .hearts-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .heart-particle {
+    position: absolute;
+    font-size: 20px;
+    animation: floatUp linear infinite;
+    opacity: 0.4;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.4; }
+    90%  { opacity: 0.3; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 520px;
+    width: 90%;
+    text-align: center;
+    overflow: visible;
+    box-shadow: 0 20px 60px rgba(255, 120, 150, 0.25);
+  }
+
+  .emoji-big {
+    font-size: 56px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #c0346a;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+
+  .question {
+    font-size: 17px;
+    color: #444;
+    margin: 20px 0 28px;
+    line-height: 1.7;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .choice-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border: 2px solid #f0c0d0;
+    border-radius: 14px;
+    background: #fff5f8;
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .choice-btn:hover {
+    border-color: #e06090;
+    background: #ffe0ec;
+    transform: translateY(-2px);
+  }
+
+  .choice-btn .num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8c8d8;
+    color: #c0346a;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+
+  .choice-btn.wrong {
+    border-color: #e04060;
+    background: #ffe8e8;
+    animation: shake 0.4s ease;
+  }
+
+  .choice-btn.correct {
+    border-color: #30b060;
+    background: #e8fff0;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(5px); }
+  }
+
+  .feedback {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .feedback.wrong-msg {
+    display: block;
+    background: #fff0f0;
+    color: #c0304a;
+    border: 1.5px solid #f0a0b0;
+  }
+
+  .feedback.right-msg {
+    display: block;
+    background: #f0fff6;
+    color: #207040;
+    border: 1.5px solid #80d0a0;
+  }
+
+  .link-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #ff6b9d, #ff4d6d);
+    color: white;
+    border-radius: 40px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(255,100,120,0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .link-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(255,100,120,0.45);
+  }
+
+  .confetti-wrap {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .conf {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    animation: fall 1.5s ease forwards;
+  }
+
+  @keyframes fall {
+    0%   { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(90vh) rotate(720deg); }
+  }
+
+  .video-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #000;
+    z-index: 2000;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .video-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .video-overlay iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .close-overlay {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.5);
+    color: #fff;
+    font-size: 15px;
+    padding: 8px 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-family: inherit;
+    z-index: 2001;
+    transition: background 0.2s;
+  }
+
+  .close-overlay:hover {
+    background: rgba(255,255,255,0.35);
+  }
+
+  .video-label {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    z-index: 2001;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    background: rgba(192,52,106,0.7);
+    padding: 6px 20px;
+    border-radius: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hearts-bg" id="heartsBg"></div>
+
+<div class="card" id="mainCard">
+  <span class="emoji-big">💝</span>
+  <div class="title">5.20 专属问答</div>
+  <div class="question">请问你 5.20 一起度过的对象是？</div>
+
+  <div class="choices">
+    <button class="choice-btn" onclick="answer(this, false)" data-label="1">
+      <div class="num">1</div>
+      <span>男神</span>
+    </button>
+    <button class="choice-btn" onclick="answer(this, false)" data-label="2">
+      <div class="num">2</div>
+      <span>女神</span>
+    </button>
+    <button class="choice-btn" onclick="answer(this, true)" data-label="3">
+      <div class="num">3</div>
+      <span>原神</span>
+    </button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<div class="confetti-wrap" id="confettiWrap"></div>
+
+<div class="video-overlay" id="videoOverlay">
+  <div class="video-label">✦ 云·原神 ✦</div>
+  <button class="close-overlay" onclick="closeVideo()">✕ 关闭视频</button>
+  <iframe id="videoIframe" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+</div>
+
+<script>
+  const heartsBg = document.getElementById('heartsBg');
+  const heartEmojis = ['❤️','💕','💖','💗','💓','💞','🌸'];
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart-particle';
+    h.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+    h.style.left = Math.random() * 100 + '%';
+    h.style.animationDuration = (6 + Math.random() * 8) + 's';
+    h.style.animationDelay = (Math.random() * 8) + 's';
+    h.style.fontSize = (14 + Math.random() * 16) + 'px';
+    heartsBg.appendChild(h);
+  }
+
+  let answered = false;
+
+  function answer(btn, isCorrect) {
+    if (answered) return;
+
+    const fb = document.getElementById('feedback');
+    const allBtns = document.querySelectorAll('.choice-btn');
+
+    if (isCorrect) {
+      answered = true;
+      btn.classList.add('correct');
+      allBtns.forEach(b => b.disabled = true);
+
+      fb.className = 'feedback right-msg';
+      fb.innerHTML = '✅ 恭喜你答对啦！5.20 最佳伴侣就是原神！';
+
+      var overlay = document.getElementById('videoOverlay');
+      var iframe = document.getElementById('videoIframe');
+      iframe.src = 'https://player.bilibili.com/player.html?bvid=BV1ic411D7xo&autoplay=1&high_quality=1';
+      overlay.classList.add('active');
+
+      spawnConfetti();
+    } else {
+      btn.classList.add('wrong');
+      const label = btn.getAttribute('data-label');
+      const name = label === '1' ? '男神' : '女神';
+
+      fb.className = 'feedback wrong-msg';
+      fb.innerHTML = `❌ 哎呀，答错啦！${name}并不是正确答案，再想想？`;
+
+      setTimeout(() => {
+        btn.classList.remove('wrong');
+        fb.className = 'feedback';
+        fb.innerHTML = '';
+      }, 2200);
+    }
+  }
+
+  function spawnConfetti() {
+    const wrap = document.getElementById('confettiWrap');
+    const colors = ['#ff6b9d','#ffd700','#7ed6df','#e056da','#badc58','#ff9f43'];
+    for (let i = 0; i < 80; i++) {
+      const c = document.createElement('div');
+      c.className = 'conf';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.top = '0';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      c.style.width = (6 + Math.random() * 10) + 'px';
+      c.style.height = (6 + Math.random() * 10) + 'px';
+      c.style.animationDelay = (Math.random() * 0.8) + 's';
+      c.style.animationDuration = (1.2 + Math.random() * 1.2) + 's';
+      wrap.appendChild(c);
+    }
+    setTimeout(() => wrap.innerHTML = '', 3000);
+  }
+
+  function closeVideo() {
+    var overlay = document.getElementById('videoOverlay');
+    var iframe = document.getElementById('videoIframe');
+    overlay.classList.remove('active');
+    iframe.src = '';
+  }
+</script>
+</body>
+</html>
